@@ -80,6 +80,17 @@ def bfs(init,goal):
         count=count+1
     return [False,count]
 
+def path(node):
+    k = []
+    k.append(node)
+    while(node.parent != None):
+        node = node.parent
+        k.append(node)
+    return k
+	
+def path_length(node):
+	return path(node).__len__()
+
 def not_equal(n,goal):
     if(n.value == goal.value):
         return False
@@ -94,23 +105,31 @@ def depth_limit_dfs(init,goal,n):
     visited = set()
     stack = []
     count = 0
-    depth = 0
+    depth = 0  
     stack.append(init)
-    while depth <= n and stack.__len__() !=0:
+    if(init.string() == goal.string()):
+    	    return [True,0]
+    while stack.__len__() !=0:
         curr = stack.pop()
+        if(path_length(curr)>n):
+        	continue
         if(not_equal(curr,goal) == False):
             return [True,count]
-        if(''.join([str(item) for item in curr.value]) not in visited):
+        if(curr.string() not in visited):
+            count+=1
+            depth+=1
             for c in curr.children():
-            	stack.append(c)
+                if(c.string() not in visited):
+                    if(c.string() == goal.string()):
+                    	return [True,count]
+
+                    stack.append(c)
             	#visited.add(''.join([str(item) for item in c.value]))
-            visited.add(''.join([str(item) for item in curr.value]))
-            count=count+1
-            depth=depth+1
+            visited.add(curr.string())
     return [False,count]
 
 def iddfs(init,goal):
-    i = 0
+    i = 0    
     globalcount = 0
     while True:
         a = depth_limit_dfs(init,goal,i)
@@ -120,7 +139,6 @@ def iddfs(init,goal):
             break
         else:
             i+=1
-
 
 
 iddfs(initial,final)
