@@ -6,6 +6,8 @@ class Node:
         self.value = value
         self.parent = parent
         self.pos = self.value.index(0)
+    def string(self):
+        return ''.join([str(item) for item in self.value])
 
     def new_Child(self):
         return Node(self.value[:], self)
@@ -58,23 +60,25 @@ class Node:
 
 def bfs(init,goal):
     visited = []
-    count = 0
+    count = 1
     notvisited = collections.deque([init])
     n = init
-    states = set([str(item) for item in init.value])
-    while(not_equal(n,goal) and notvisited.__len__() != 0):
+    if(init.string() == goal.string()):
+    	return [True,0]
+    states = set()
+    states.add(init.string())
+    while(notvisited.__len__() != 0):
         n = notvisited.popleft()
         visited.append(n)
-        
         for c in n.children():
-            if(''.join([str(item) for item in c.value]) not in states):
+            if(c.string() not in states):
+                if(not_equal(c,goal) == False):
+                	return [True,count]
                 notvisited.append(c)
-                states.add(''.join([str(item) for item in c.value]))
+                states.add(c.string())
                 #sleep(1)
         count=count+1
-    print(n)
-    print('\n')
-    print(count)
+    return [False,count]
 
 def not_equal(n,goal):
     if(n.value == goal.value):
@@ -83,9 +87,9 @@ def not_equal(n,goal):
         return True
 
 initial = Node([1,2,3,4,5,6,0,7,8])
-final = Node([1,2,3,4,5,6,7,8,0])
+final = Node([1,2,3,4,0,6,7,5,8])
 #print(initial.children())
-bfs(initial,final)
+print(bfs(initial,final))
 def depth_limit_dfs(init,goal,n):
     visited = set()
     stack = []
