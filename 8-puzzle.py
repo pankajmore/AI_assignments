@@ -1,5 +1,9 @@
 import collections
+import itertools
 from time import sleep
+from heapq import *
+import random
+import math
 class Node:
     def __init__(self, value=None, parent=None, action=None, path_cost=0):
         "Create a search tree Node, derived from a parent by an action."
@@ -7,6 +11,10 @@ class Node:
         self.parent = parent
         self.pos = self.value.index(0)
         self.f = 0
+
+    def randomize(self):
+    	random.shuffle(self.value)
+
     def string(self):
         return ''.join([str(item) for item in self.value])
 
@@ -56,6 +64,7 @@ class Node:
         bacche1 = [item for item in bacche if(self.value != item.value)]
         return bacche1
 
+final = Node([1,2,3,4,5,6,7,8,0])
 #______________________________________________________________________________
 ## Uninformed Search algorithms
 
@@ -97,11 +106,6 @@ def not_equal(n,goal):
         return False
     else:
         return True
-
-initial = Node([3,1,2,7,4,5,0,8,6])
-final = Node([1,2,3,4,5,6,7,8,0])
-#print(initial.children())
-print(bfs(initial,final))
 def depth_limit_dfs(init,goal,n):
     visited = set()
     stack = []
@@ -129,6 +133,19 @@ def depth_limit_dfs(init,goal,n):
             visited.add(curr.string())
     return [False,count]
 
+def idastar(init,goal,heuristic):
+    i = 0    
+    globalcount = 0
+    while True:
+        a = depth_limit_astar(init,goal,i,heuristic)
+        globalcount+=a[1]
+        if(a[0]):
+            return globalcount
+        else:
+            i+=1
+            if(i>181441):
+            	return [False,large]
+
 def iddfs(init,goal):
     i = 0    
     globalcount = 0
@@ -136,12 +153,12 @@ def iddfs(init,goal):
         a = depth_limit_dfs(init,goal,i)
         globalcount+=a[1]
         if(a[0]):
-            print(globalcount)
-            break
+            return globalcount
         else:
             i+=1
             if(i>181441):
-            	return [False,large]
+                return [False,large]
+
 
 def misplaced_tiles(node,goal=final):
     count = 0
@@ -184,42 +201,133 @@ def sort_list(nodes,heuristic):
     	b.append(nodes[a[i][1]])
     return b
 
-def insert(node,notvisited,heuristic):
-    if heuristic == 'misplaced':
-        node.f = misplaced_tiles(node)
-        v = []
-        for item in notvisited:
-            v.append(item.value)
-        for i in range(notvisited.__len__()):
-            if v[i] < node.f and v[i+1] >= node.f:
-                return i
-        return i
+
     
 def astar(init,goal,heuristic):
     visited = []
     count = 1
-    notvisited = collections.deque([init])
+    hcount = 1
+    counter = itertools.count(1)
+    notvisited = []
+    heappush(notvisited,[heuristic(init),hcount,init])
+    hcount = next(counter)
+
     n = init
     if(init.string() == goal.string()):
     	return [True,0]
     states = set()
     states.add(init.string())
-    while(notvisited.__len__() != 0):
-        n = notvisited.popleft()
-        visited.append(n)
+    while(n.string() != goal.string()):
+        count+=1
+        n = heappop(notvisited)
+        n = n[2]
         for c in n.children():
             if(c.string() not in states):
                 if(not_equal(c,goal) == False):
                 	return [True,count]
-                notvisited.insert(where(c,notvisited,heuristic),c)
+                heappush(notvisited,[heuristic(c),hcount,c])
+                hcount = next(counter)
                 states.add(c.string())
+                #print(notvisited)
                 #sleep(1)
-        count=count+1
+        visited.append(n)
     return [False,count]
 
+def depth_limit_astar(init,goal,n,heuristic=None):
+    visited = set()
+    stack = []
+    count = 0
+    hcount = 1
+    counter = itertools.count(1)
+    depth = 0  
+    stack = []
+    heappush(stack,[heuristic(init),hcount,init])
+    hcount = next(counter)
+    if(init.string() == goal.string()):
+            return [True,0]
+    while stack.__len__() !=0:
+        curr = heappop(stack)
+        curr = curr[2]
+        if(heuristic(curr)>n):
+            continue
+        if(not_equal(curr,goal) == False):
+            return [True,count]
+        if(curr.string() not in visited):
+            count+=1
+            depth+=1
+            for c in curr.children():
+                if(c.string() not in visited):
+                    if(c.string() == goal.string()):
+                        return [True,count]
 
-	
+                    heappush(stack,[heuristic(c),hcount,c])
+                    hcount = next(counter)
+                #visited.add(''.join([str(item) for item in c.value]))
+            visited.add(curr.string())
+    return [False,count]
 
-iddfs(initial,final)
-print(astar(initial,final,'misplaced'))
-print(astar(initial,final,'manhatten'))
+def precheck(init):
+    iinversions = 0 
+    for i in range(8):
+        for j in range(i,8):
+            if init.value[i] > init.value[j+1] and init.value[j+1] !=0:
+                iinversions += 1
+    x = init.value.index(0)
+    #iinversions+=math.ceil((x+1)/3)
+    #print('inversions',iinversions)
+    if(iinversions %2 == 0): 
+        return True
+    else:
+        return False
+
+cbfs = []
+ciddfs = []
+castar_misplaced = []
+castar_manhatten = []
+cidastar_misplaced = []
+cidastar_manhatten = []
+i = 0
+f = open('tests', 'w')
+while(True):
+    final = Node([1,2,3,4,5,6,7,8,0])
+    initial = Node([1,2,3,4,5,6,7,8,0])
+    initial.randomize()
+    #initial = Node([5,4,3,2,7,8,6,1,0])
+    if precheck(initial):
+        castar_manhatten.append(astar(initial,final,manhatten_distance)[1])
+        print('astar_manhattten',castar_manhatten[i])
+        for j in initial.value:
+            f.write(str(j))
+        f.write('\n')
+        i+=1
+    else:
+        continue
+    
+    if(i==50):
+        break
+
+f.close()
+print(sum(castar_manhatten)/50)
+#initial = Node([4,1,2,5,0,3,7,8,6])
+#initial = Node([1,2,3,4,0,6,7,5,8])
+#initial = Node([8,6,7,2,5,4,3,0,1])
+#initial = Node([8,1,5,3,0,6,4,2,7])
+"""        print(initial)
+        cbfs.append(bfs(initial,final)[1])
+        print('bfs',cbfs[i])
+        ciddfs.append(iddfs(initial,final))
+
+
+        print('iddfs',ciddfs[i])
+
+        castar_misplaced.append(astar(initial,final,misplaced_tiles)[1])
+        print('astar_misplaced',castar_misplaced[i])
+
+        castar_manhatten.append(astar(initial,final,manhatten_distance)[1])
+        print('astar_manhattten',caster_manhatten[i])
+        cidastar_misplaced.append(idastar(initial,final,misplaced_tiles))
+        print('idastar_misplaced',cidastar_misplaced[i])
+        cidastar_manhatten.append(idastar(initial,final,manhatten_distance))
+        print('idastar_manhattten',cidastar_manhatten[i])
+
+"""
