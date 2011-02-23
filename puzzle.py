@@ -288,7 +288,7 @@ cidastar_misplaced = []
 cidastar_manhatten = []
 
 
-def generate():
+def generate(N):
     i = 0
     f = open('tests', 'w')
 #generate feasible test cases and write to file
@@ -305,7 +305,7 @@ def generate():
         else:
             continue
     
-        if(i==50):
+        if(i==N):
             break
     f.close()
 initial=[]
@@ -333,3 +333,18 @@ initial=[]
         print('idastar_manhattten',cidastar_manhatten[i])
 
 """
+def eval_manhatten(node):
+    global md
+    distance = 0
+    for i in range(9):
+        if node.value[i] !=0:
+            distance += md[i+1][node.value[i]]
+    return distance
+def eval_misplaced(node,goal=final):
+    count = 0
+    for i in range(9):
+        if(node.value[i] != goal.value[i]):
+            count+=1
+    return count
+
+
